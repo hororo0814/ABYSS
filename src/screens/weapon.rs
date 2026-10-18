@@ -106,6 +106,9 @@ impl WeaponScreen {
         if self.back_home_button.is_clicked() {
             return Some(GameState::Title);
         }
+        if self.enemy_button.is_clicked() {
+            return Some(GameState::Enemy);
+        }
 
         None
     }

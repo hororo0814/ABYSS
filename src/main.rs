@@ -1,6 +1,9 @@
 use abyss::game_state::{Game, GameState};
+use abyss::screens::combat::CombatScreen;
+use abyss::screens::enemy::EnemyScreen;
 use abyss::screens::title::TitleScreen;
 use abyss::screens::weapon::WeaponScreen;
+use abyss::ui::sidebar::Sidebar;
 use macroquad::prelude::*;
 
 fn rgb(r: u8, g: u8, b: u8) -> Color {
@@ -29,9 +32,14 @@ async fn main() {
     //タイトル画面の背景
     let title_back_color = rgb(24, 29, 39);
     let weapon_back_color = rgb(0, 45, 135);
+    let enemy_back_color = rgb(0, 72, 215);
+    let combat_back_color = rgb(94, 94, 94);
     let mut game = Game::new();
     let title_screen = TitleScreen::new();
     let weapon_screen = WeaponScreen::new();
+    let enemy_screen = EnemyScreen::new();
+    let combat_screen = CombatScreen::new();
+    let mut sidebar_screen = Sidebar::new();
 
     loop {
         match game.state() {
@@ -49,6 +57,25 @@ async fn main() {
                     game.transition_to(next_state);
                 }
                 weapon_screen.draw();
+            }
+            GameState::Enemy => {
+                clear_background(enemy_back_color);
+                if let Some(next_state) = enemy_screen.input() {
+                    game.transition_to(next_state);
+                }
+                enemy_screen.draw();
+            }
+            GameState::Combat => {
+                clear_background(combat_back_color);
+
+                sidebar_screen.handle_toggle();
+
+                if let Some(next_state) = sidebar_screen.input() {
+                    game.transition_to(next_state);
+                }
+
+                combat_screen.draw();
+                sidebar_screen.draw();
             }
             _ => {}
         }
