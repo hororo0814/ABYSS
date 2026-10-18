@@ -7,6 +7,7 @@ pub struct WeaponScreen {
     enemy_button: Button,
     abyss_button: Button,
     review_button: Button,
+    back_home_button: Button,
 }
 
 fn rgb(r: u8, g: u8, b: u8) -> Color {
@@ -17,12 +18,12 @@ impl WeaponScreen {
     pub fn new() -> Self {
         Self {
             weapon_button: Button::new(
-                580.0,
-                450.0,
-                300.0,
-                110.0,
-                "Weapon".to_string(),
+                1100.0,
                 50.0,
+                100.0,
+                60.0,
+                "Weapon".to_string(),
+                20.0,
                 88,
                 231,
                 32,
@@ -30,14 +31,13 @@ impl WeaponScreen {
                 29,
                 39,
             ),
-
             enemy_button: Button::new(
-                580.0,
-                600.0,
-                300.0,
-                110.0,
+                1220.0,
+                50.0,
+                100.0,
+                60.0,
                 "Enemy".to_string(),
-                40.0,
+                20.0,
                 88,
                 231,
                 32,
@@ -45,12 +45,11 @@ impl WeaponScreen {
                 29,
                 39,
             ),
-
             abyss_button: Button::new(
-                1200.0,
-                650.0,
-                150.0,
-                70.0,
+                520.0,
+                30.0,
+                500.0,
+                100.0,
                 "ABYSS".to_string(),
                 25.0,
                 88,
@@ -60,14 +59,27 @@ impl WeaponScreen {
                 29,
                 39,
             ),
-
             review_button: Button::new(
-                1200.0,
-                550.0,
-                150.0,
-                70.0,
+                200.0,
+                30.0,
+                300.0,
+                100.0,
                 "REVIEW".to_string(),
                 25.0,
+                88,
+                231,
+                32,
+                24,
+                29,
+                39,
+            ),
+            back_home_button: Button::new(
+                20.0,
+                50.0,
+                70.0,
+                60.0,
+                "←".to_string(),
+                35.0,
                 88,
                 231,
                 32,
@@ -83,11 +95,16 @@ impl WeaponScreen {
         self.enemy_button.draw();
         self.abyss_button.draw();
         self.review_button.draw();
+        self.back_home_button.draw();
+        draw_line(0.0, 150.0, 1400.0, 150.0, 2.0, rgb(88, 231, 32));
     }
 
     pub fn input(&self) -> Option<GameState> {
         if self.abyss_button.is_clicked() || self.abyss_button.is_clicked() {
             return Some(GameState::Combat);
+        }
+        if self.back_home_button.is_clicked() {
+            return Some(GameState::Title);
         }
 
         None

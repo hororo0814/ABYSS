@@ -45,6 +45,9 @@ async fn main() {
             }
             GameState::Weapon => {
                 clear_background(weapon_back_color);
+                if let Some(next_state) = weapon_screen.input() {
+                    game.transition_to(next_state);
+                }
                 weapon_screen.draw();
             }
             _ => {}
