@@ -113,4 +113,7 @@ impl Sidebar {
 
         None
     }
+    pub fn close(&mut self) {
+        self.is_open = false;
+    }
 }

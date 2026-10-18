@@ -35,6 +35,10 @@ impl CombatScreen {
     }
 
     pub fn input(&self) -> Option<GameState> {
+        if self.foge_button.is_clicked() {
+            return Some(GameState::Result);
+        }
+
         None
     }
 }

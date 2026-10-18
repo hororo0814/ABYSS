@@ -100,7 +100,7 @@ impl WeaponScreen {
     }
 
     pub fn input(&self) -> Option<GameState> {
-        if self.abyss_button.is_clicked() || self.abyss_button.is_clicked() {
+        if self.abyss_button.is_clicked() || self.review_button.is_clicked() {
             return Some(GameState::Combat);
         }
         if self.back_home_button.is_clicked() {
