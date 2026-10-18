@@ -3,7 +3,7 @@ pub enum GameState {
     Title,
     Weapon,
     Enemy,
-    Battle,
+    Combat,
     Result,
     Prologue,
     Epilogue,
