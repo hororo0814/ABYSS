@@ -30,6 +30,11 @@ async fn main() {
     //読み込んだフォントをデフォルトにする
     set_default_font(font);
 
+    // 戦闘画面のイラストを読み込む
+    let combat_image = load_texture("assets/images/image.png")
+        .await
+        .expect("戦闘画面の画像の読み込みに失敗しました");
+
     //タイトル画面の背景
     let title_back_color = rgb(24, 29, 39);
     let weapon_back_color = rgb(0, 45, 135);
@@ -40,7 +45,7 @@ async fn main() {
     let title_screen = TitleScreen::new();
     let weapon_screen = WeaponScreen::new();
     let enemy_screen = EnemyScreen::new();
-    let combat_screen = CombatScreen::new();
+    let mut combat_screen = CombatScreen::new(combat_image);
     let result_screen = ResultScreen::new();
     let mut sidebar_screen = Sidebar::new();
 
@@ -57,6 +62,10 @@ async fn main() {
             GameState::Weapon => {
                 clear_background(weapon_back_color);
                 if let Some(next_state) = weapon_screen.input() {
+                    if next_state == GameState::Combat {
+                        combat_screen.start_animation();
+                    }
+
                     game.transition_to(next_state);
                 }
                 weapon_screen.draw();
@@ -64,6 +73,10 @@ async fn main() {
             GameState::Enemy => {
                 clear_background(enemy_back_color);
                 if let Some(next_state) = enemy_screen.input() {
+                    if next_state == GameState::Combat {
+                        combat_screen.start_animation();
+                    }
+
                     game.transition_to(next_state);
                 }
                 enemy_screen.draw();
@@ -75,6 +88,7 @@ async fn main() {
                     sidebar_screen.close();
                     game.transition_to(next_state);
                 }
+                sidebar_screen.update();
 
                 sidebar_screen.handle_toggle();
 
@@ -83,6 +97,8 @@ async fn main() {
                     game.transition_to(next_state);
                 }
 
+                combat_screen.input();
+                combat_screen.update();
                 combat_screen.draw();
                 sidebar_screen.draw();
             }

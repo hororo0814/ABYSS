@@ -92,6 +92,12 @@ impl TitleScreen {
         if self.start_button.is_clicked() {
             return Some(GameState::Weapon);
         }
+        if self.continue_button.is_clicked() {
+            return Some(GameState::Weapon);
+        }
+        if self.story_button.is_clicked() {
+            return Some(GameState::Prologue);
+        }
 
         None
     }

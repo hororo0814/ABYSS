@@ -1,4 +1,5 @@
 use crate::game_state::GameState;
+use crate::systems::animation::{Animation, Direction};
 use crate::ui::button::Button;
 use macroquad::prelude::*;
 
@@ -9,7 +10,12 @@ pub struct Sidebar {
     //サイドバーに付随するボタン
     giveup_button: Button,
     exit_button: Button,
+    //サイドバーを出すボタン
     toggle_button: Button,
+    animation: Animation,
+    current_x: f32,
+    exit_button_start_x: f32,
+    giveup_button_start_x: f32,
 }
 
 fn rgb(r: u8, g: u8, b: u8) -> Color {
@@ -64,12 +70,32 @@ impl Sidebar {
                 29,
                 39,
             ),
+            //アニメーション用フィールド
+            animation: Animation::new(Direction::Right, 0.95, -280.0, 0.0, 280.0),
+            current_x: -280.0,
+            exit_button_start_x: 220.0,
+            giveup_button_start_x: 20.0,
         }
     }
 
     //ここでトグルボタンのオンオフの切り替えをする
     pub fn toggle(&mut self) {
         self.is_open = !self.is_open;
+
+        let direction = if self.is_open {
+            Direction::Right
+        } else {
+            Direction::Left
+        };
+
+        let distance = if self.is_open {
+            -self.current_x
+        } else {
+            self.current_x + self.width
+        };
+
+        self.animation
+            .restart(direction, 0.2, self.current_x, 0.0, distance.max(0.0));
     }
 
     pub fn handle_toggle(&mut self) {
@@ -78,10 +104,20 @@ impl Sidebar {
         }
     }
 
+    pub fn update(&mut self) {
+        self.animation.update();
+
+        let (x, _) = self.animation.position();
+        self.current_x = x;
+
+        self.exit_button.x = self.exit_button_start_x + self.current_x;
+        self.giveup_button.x = self.giveup_button_start_x + self.current_x;
+    }
+
     pub fn draw(&self) {
         if self.is_open {
             draw_rectangle(
-                0.0,
+                self.current_x,
                 0.0,
                 self.width,
                 self.height,

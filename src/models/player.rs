@@ -59,6 +59,18 @@ impl Player {
             self.level += 1;
         }
     }
+
+    pub fn level(&self) -> u32 {
+        self.level
+    }
+
+    pub fn now_hp(&self) -> u32 {
+        self.now_hp
+    }
+
+    pub fn now_mp(&self) -> u32 {
+        self.now_mp
+    }
 }
 
 #[cfg(test)]
