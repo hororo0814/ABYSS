@@ -1,6 +1,7 @@
 use crate::game_state::GameState;
 use crate::systems::animation::{Animation, Direction};
 use crate::ui::button::Button;
+use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
 
 pub struct Sidebar {
@@ -98,8 +99,8 @@ impl Sidebar {
             .restart(direction, 0.2, self.current_x, 0.0, distance.max(0.0));
     }
 
-    pub fn handle_toggle(&mut self) {
-        if self.toggle_button.is_clicked() {
+    pub fn handle_toggle(&mut self, screen: &ScreenScale) {
+        if self.toggle_button.is_clicked(screen) {
             self.toggle();
         }
     }
@@ -114,7 +115,7 @@ impl Sidebar {
         self.giveup_button.x = self.giveup_button_start_x + self.current_x;
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, screen: &ScreenScale) {
         if self.is_open {
             draw_rectangle(
                 self.current_x,
@@ -124,26 +125,26 @@ impl Sidebar {
                 Color::new(24.0 / 255.0, 29.0 / 255.0, 39.0 / 255.0, 1.0),
             );
 
-            self.exit_button.draw();
-            self.giveup_button.draw();
+            self.exit_button.draw(screen);
+            self.giveup_button.draw(screen);
         }
 
         if !self.is_open {
-            self.toggle_button.draw();
+            self.toggle_button.draw(screen);
         }
     }
 
-    pub fn input(&mut self) -> Option<GameState> {
+    pub fn input(&mut self, screen: &ScreenScale) -> Option<GameState> {
         if !self.is_open {
             return None;
         }
 
-        if self.exit_button.is_clicked() {
+        if self.exit_button.is_clicked(screen) {
             self.toggle();
             return None;
         }
 
-        if self.giveup_button.is_clicked() {
+        if self.giveup_button.is_clicked(screen) {
             return Some(GameState::Weapon);
         }
 

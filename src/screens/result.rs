@@ -1,5 +1,6 @@
 use crate::game_state::GameState;
 use crate::ui::button::Button;
+use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
 
 pub struct ResultScreen {
@@ -45,15 +46,15 @@ impl ResultScreen {
         }
     }
 
-    pub fn draw(&self) {
-        self.back_weapon_button.draw();
+    pub fn draw(&self, screen: &ScreenScale) {
+        self.back_weapon_button.draw(screen);
     }
 
-    pub fn input(&self) -> Option<GameState> {
-        if self.back_weapon_button.is_clicked() {
+    pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {
+        if self.back_weapon_button.is_clicked(screen) {
             return Some(GameState::Weapon);
         }
-        if self.epilogue_button.is_clicked() {
+        if self.epilogue_button.is_clicked(screen) {
             return Some(GameState::Epilogue);
         }
 

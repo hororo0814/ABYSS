@@ -82,6 +82,18 @@ impl Enemy {
             }
         }
     }
+
+    pub fn now_hp(&self) -> u32 {
+        self.now_hp
+    }
+
+    pub fn is_defeated(&self) -> bool {
+        self.now_hp == 0
+    }
+
+    pub fn exp(&self) -> u32 {
+        self.exp
+    }
 }
 
 impl Ability {

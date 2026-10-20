@@ -1,5 +1,6 @@
 use crate::game_state::GameState;
 use crate::ui::button::Button;
+use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
 
 pub struct TitleScreen {
@@ -79,23 +80,29 @@ impl TitleScreen {
         }
     }
 
-    pub fn draw(&self) {
-        self.start_button.draw();
-        self.continue_button.draw();
-        self.credit_button.draw();
-        self.story_button.draw();
+    pub fn draw(&self, screen: &ScreenScale) {
+        self.start_button.draw(screen);
+        self.continue_button.draw(screen);
+        self.credit_button.draw(screen);
+        self.story_button.draw(screen);
 
-        draw_text("ABYSS", 340.0, 250.0, 200.0, rgb(88, 231, 32));
+        draw_text(
+            "ABYSS",
+            screen.transform_x(340.0),
+            screen.transform_y(250.0),
+            screen.transform_size(200.0),
+            rgb(88, 231, 32),
+        );
     }
 
-    pub fn input(&self) -> Option<GameState> {
-        if self.start_button.is_clicked() {
+    pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {
+        if self.start_button.is_clicked(screen) {
             return Some(GameState::Weapon);
         }
-        if self.continue_button.is_clicked() {
+        if self.continue_button.is_clicked(screen) {
             return Some(GameState::Weapon);
         }
-        if self.story_button.is_clicked() {
+        if self.story_button.is_clicked(screen) {
             return Some(GameState::Prologue);
         }
 

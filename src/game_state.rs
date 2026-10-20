@@ -7,6 +7,7 @@ pub enum GameState {
     Result,
     Prologue,
     Epilogue,
+    Inventory,
 }
 
 pub struct Game {

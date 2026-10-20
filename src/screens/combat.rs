@@ -2,11 +2,13 @@ use crate::game_state::GameState;
 use crate::systems::animation::Direction::{Left, Right};
 use crate::systems::animation::{Animation, Direction};
 use crate::ui::button::Button;
+use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
 
 pub struct CombatScreen {
     foge_button: Button,
-    combat_image: Texture2D,
+    combat_image_first: Texture2D,
+    combat_image_second: Texture2D,
     animation_in: Animation,
     animation_out: Animation,
     image_x: f32,
@@ -25,7 +27,7 @@ fn rgb(r: u8, g: u8, b: u8) -> Color {
 }
 
 impl CombatScreen {
-    pub fn new(combat_image: Texture2D) -> Self {
+    pub fn new(combat_image_first: Texture2D, combat_image_second: Texture2D) -> Self {
         Self {
             foge_button: Button::new(
                 1000.0,
@@ -41,33 +43,49 @@ impl CombatScreen {
                 29,
                 39,
             ),
-            combat_image,
-            image_x: 600.0,
+            combat_image_first,
+            combat_image_second,
+            image_x: 1200.0,
             image_state: ImageAnimationState::Entering,
-            animation_in: Animation::new(Left, 0.3, 600.0, 400.0, 400.0),
-            animation_out: Animation::new(Right, 0.3, 200.0, 400.0, 400.0),
+            animation_in: Animation::new(Left, 0.3, 1200.0, 400.0, 1200.0),
+            animation_out: Animation::new(Right, 0.3, 0.0, 400.0, 1200.0),
         }
     }
 
-    pub fn draw(&self) {
+    pub fn draw(&self, screen: &ScreenScale) {
         if !matches!(self.image_state, ImageAnimationState::Finished) {
+            let image_x = screen.transform_x(self.image_x);
+            let first_y = screen.transform_y(100.0);
+            let second_y = screen.transform_y(500.0);
+            let image_size = screen.transform_size(400.0);
+
             draw_texture_ex(
-                &self.combat_image,
-                self.image_x,
-                200.0,
+                &self.combat_image_first,
+                image_x,
+                first_y,
                 WHITE,
                 DrawTextureParams {
-                    dest_size: Some(vec2(400.0, 400.0)),
+                    dest_size: Some(vec2(image_size, image_size)),
+                    ..Default::default()
+                },
+            );
+            draw_texture_ex(
+                &self.combat_image_second,
+                image_x,
+                second_y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(vec2(image_size, image_size)),
                     ..Default::default()
                 },
             );
         }
 
-        self.foge_button.draw();
+        self.foge_button.draw(screen);
     }
 
-    pub fn input(&mut self) -> Option<GameState> {
-        if self.foge_button.is_clicked() {
+    pub fn input(&mut self, screen: &ScreenScale) -> Option<GameState> {
+        if self.foge_button.is_clicked(screen) {
             return Some(GameState::Result);
         }
 

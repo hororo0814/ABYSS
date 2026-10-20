@@ -1,5 +1,3 @@
-use crate::models::weapon::WeaponId;
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Player {
     level: u32,
@@ -8,7 +6,7 @@ pub struct Player {
     now_mp: u32,
     max_mp: u32,
     now_exp: u32,
-    weapon_ids: Vec<WeaponId>,
+    weapon_ids: Vec<u32>,
 }
 
 impl Player {
@@ -24,10 +22,12 @@ impl Player {
         }
     }
 
+    //ダメージを受けたときの処理
     pub fn take_damage(&mut self, damage: u32) {
         self.now_hp = self.now_hp.saturating_sub(damage);
     }
 
+    //自分でHPを回復したときの処理
     pub fn heal_hp(&mut self, add_hp: u32) {
         if add_hp + self.now_hp <= self.max_hp {
             self.now_hp += add_hp;
@@ -36,10 +36,12 @@ impl Player {
         }
     }
 
+    //MPを消費したときの処理
     pub fn consume_mp(&mut self, mp_value: u32) {
         self.now_mp = self.now_mp.saturating_sub(mp_value);
     }
 
+    //MPを回復したときの処理
     pub fn get_mp(&mut self, mp_value: u32) {
         if mp_value + self.now_mp <= self.max_mp {
             self.now_mp += mp_value;
@@ -48,6 +50,7 @@ impl Player {
         }
     }
 
+    //経験値を獲得したときの処理
     pub fn get_exp(&mut self, get_exp: u32) {
         let max_exp = self.level * 1000;
 
@@ -60,16 +63,25 @@ impl Player {
         }
     }
 
+    //レベルのゲッター
     pub fn level(&self) -> u32 {
         self.level
     }
 
+    //現状のHPのゲッター
     pub fn now_hp(&self) -> u32 {
         self.now_hp
     }
 
+    //現状のMPのゲッター
     pub fn now_mp(&self) -> u32 {
         self.now_mp
+    }
+
+    //プレイヤーのHPが0になったかどうかを判断する
+    //敗北判定
+    pub fn is_defeated(&self) -> bool {
+        self.now_hp == 0
     }
 }
 

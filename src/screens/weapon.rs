@@ -1,5 +1,8 @@
 use crate::game_state::GameState;
+use crate::models::inventory::{Inventory, WeaponNote};
+use crate::screens::inventory::InventoryScreen;
 use crate::ui::button::Button;
+use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
 
 pub struct WeaponScreen {
@@ -8,6 +11,7 @@ pub struct WeaponScreen {
     abyss_button: Button,
     review_button: Button,
     back_home_button: Button,
+    inventory_screen: InventoryScreen,
 }
 
 fn rgb(r: u8, g: u8, b: u8) -> Color {
@@ -15,7 +19,7 @@ fn rgb(r: u8, g: u8, b: u8) -> Color {
 }
 
 impl WeaponScreen {
-    pub fn new() -> Self {
+    pub fn new(weapons: Vec<WeaponNote>) -> Self {
         Self {
             weapon_button: Button::new(
                 1100.0,
@@ -87,26 +91,35 @@ impl WeaponScreen {
                 29,
                 39,
             ),
+            inventory_screen: InventoryScreen::new(weapons),
         }
     }
 
-    pub fn draw(&self) {
-        self.weapon_button.draw();
-        self.enemy_button.draw();
-        self.abyss_button.draw();
-        self.review_button.draw();
-        self.back_home_button.draw();
-        draw_line(0.0, 150.0, 1400.0, 150.0, 2.0, rgb(88, 231, 32));
+    pub fn draw(&self, screen: &ScreenScale, inventory: &Inventory) {
+        self.weapon_button.draw(screen);
+        self.enemy_button.draw(screen);
+        self.abyss_button.draw(screen);
+        self.review_button.draw(screen);
+        self.back_home_button.draw(screen);
+        draw_line(
+            screen.transform_x(0.0),
+            screen.transform_y(150.0),
+            screen.transform_x(1400.0),
+            screen.transform_y(150.0),
+            2.0,
+            rgb(88, 231, 32),
+        );
+        self.inventory_screen.draw(inventory, screen);
     }
 
-    pub fn input(&self) -> Option<GameState> {
-        if self.abyss_button.is_clicked() || self.review_button.is_clicked() {
+    pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {
+        if self.abyss_button.is_clicked(screen) || self.review_button.is_clicked(screen) {
             return Some(GameState::Combat);
         }
-        if self.back_home_button.is_clicked() {
+        if self.back_home_button.is_clicked(screen) {
             return Some(GameState::Title);
         }
-        if self.enemy_button.is_clicked() {
+        if self.enemy_button.is_clicked(screen) {
             return Some(GameState::Enemy);
         }
 

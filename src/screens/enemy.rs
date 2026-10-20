@@ -1,5 +1,6 @@
 use crate::game_state::GameState;
 use crate::ui::button::Button;
+use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
 
 pub struct EnemyScreen {
@@ -90,23 +91,30 @@ impl EnemyScreen {
         }
     }
 
-    pub fn draw(&self) {
-        self.weapon_button.draw();
-        self.enemy_button.draw();
-        self.abyss_button.draw();
-        self.review_button.draw();
-        self.back_home_button.draw();
-        draw_line(0.0, 150.0, 1400.0, 150.0, 2.0, rgb(88, 231, 32));
+    pub fn draw(&self, screen: &ScreenScale) {
+        self.weapon_button.draw(screen);
+        self.enemy_button.draw(screen);
+        self.abyss_button.draw(screen);
+        self.review_button.draw(screen);
+        self.back_home_button.draw(screen);
+        draw_line(
+            screen.transform_x(0.0),
+            screen.transform_y(150.0),
+            screen.transform_x(1400.0),
+            screen.transform_y(150.0),
+            2.0,
+            rgb(88, 231, 32),
+        );
     }
 
-    pub fn input(&self) -> Option<GameState> {
-        if self.abyss_button.is_clicked() || self.abyss_button.is_clicked() {
+    pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {
+        if self.abyss_button.is_clicked(screen) || self.abyss_button.is_clicked(screen) {
             return Some(GameState::Combat);
         }
-        if self.back_home_button.is_clicked() {
+        if self.back_home_button.is_clicked(screen) {
             return Some(GameState::Title);
         }
-        if self.weapon_button.is_clicked() {
+        if self.weapon_button.is_clicked(screen) {
             return Some(GameState::Weapon);
         }
 
