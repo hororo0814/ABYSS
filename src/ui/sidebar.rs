@@ -120,9 +120,9 @@ impl Sidebar {
             draw_rectangle(
                 self.current_x,
                 0.0,
-                self.width,
-                self.height,
-                Color::new(24.0 / 255.0, 29.0 / 255.0, 39.0 / 255.0, 1.0),
+                screen.transform_x(self.width),
+                screen.transform_y(self.height),
+                rgb(24, 29, 39),
             );
 
             self.exit_button.draw(screen);

@@ -68,7 +68,7 @@ impl InventoryScreen {
             let slot_color = if is_owned {
                 rgb(95, 229, 61)
             } else {
-                rgb(213, 71, 71)
+                rgb(21, 70, 41)
             };
 
             let original_x = GRID_X + column as f32 * (SLOT_SIZE + SLOT_GAP);
@@ -82,8 +82,25 @@ impl InventoryScreen {
 
             // スロットを先に描画する
             draw_rectangle(x, y, size, size, slot_color);
-            draw_rectangle_lines(x, y, size, size, line_width, GREEN);
+            draw_rectangle_lines(x, y, size, size, line_width, rgb(95, 229, 61));
 
+            //所持しているウェポンは中身にしろ背景を追加する
+            if is_owned {
+                draw_rectangle(
+                    x + 5.0,
+                    y + 30.0,
+                    size - 20.0,
+                    size - 200.0,
+                    rgb(255, 255, 255),
+                );
+                draw_rectangle(
+                    x + 5.0,
+                    y + 100.0,
+                    size - 20.0,
+                    size - 110.0,
+                    rgb(255, 255, 255),
+                );
+            }
             // IDを表示する
             draw_text(
                 &format!("{id:02}"),
