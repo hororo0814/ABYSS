@@ -78,6 +78,11 @@ impl Player {
         self.now_mp
     }
 
+    //ウェポンを使うときにMPが足りるかどうかの判定
+    pub fn has_enough_mp(&self, required_mp: u32) -> bool {
+        self.now_mp >= required_mp
+    }
+
     //プレイヤーのHPが0になったかどうかを判断する
     //敗北判定
     pub fn is_defeated(&self) -> bool {

@@ -45,8 +45,8 @@ async fn main() {
 
     //タイトル画面の背景
     let title_back_color = rgb(24, 29, 39);
-    let weapon_back_color = rgb(0, 45, 135);
-    let enemy_back_color = rgb(0, 72, 215);
+    let weapon_back_color = rgb(16, 26, 45);
+    let enemy_back_color = rgb(87, 23, 23);
     let combat_back_color = rgb(94, 94, 94);
     let result_back_color = rgb(52, 47, 68);
     let mut game = Game::new();

@@ -53,6 +53,14 @@ impl CombatScreen {
     }
 
     pub fn draw(&self, screen: &ScreenScale) {
+        draw_rectangle(
+            -100.0,
+            screen.transform_y(500.0),
+            screen.transform_size(1800.0),
+            screen.transform_size(350.0),
+            rgb(61, 61, 61),
+        );
+
         if !matches!(self.image_state, ImageAnimationState::Finished) {
             let image_x = screen.transform_x(self.image_x);
             let first_y = screen.transform_y(100.0);

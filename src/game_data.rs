@@ -1,6 +1,6 @@
 use crate::models::inventory::Inventory;
 use crate::models::player::Player;
-use crate::models::weapon::Sign;
+use crate::models::weapon::PlayerSign;
 use crate::models::weapon::{DevInventory, DevWeapon};
 
 pub struct GameData {
@@ -16,9 +16,15 @@ impl GameData {
 
         //プレイヤー側のインベントリ
         // ゲーム開始時はID 1の武器だけを所持する
+        //ここにあれば所持している判定になってカード背景に色がつく
         player_inventory.add_weapon(
             1,
             "初期武器".to_string(),
+            "ゲーム開始時から所持している武器".to_string(),
+        );
+        player_inventory.add_weapon(
+            2,
+            "初期MP回復ブキ".to_string(),
             "ゲーム開始時から所持している武器".to_string(),
         );
 
@@ -27,11 +33,21 @@ impl GameData {
         dev_inventory.add_weapon(
             1,
             "小攻撃".to_string(),
-            Sign::None,
+            PlayerSign::None,
             0,
-            Sign::Negative,
+            PlayerSign::Negative,
             80,
-            Sign::Negative,
+            PlayerSign::Negative,
+            25,
+        );
+        dev_inventory.add_weapon(
+            2,
+            "MP回復武器".to_string(),
+            PlayerSign::None,
+            0,
+            PlayerSign::None,
+            0,
+            PlayerSign::Positive,
             25,
         );
 
@@ -42,8 +58,14 @@ impl GameData {
         }
     }
 
+    //プレイヤー情報のゲッター
     pub fn player(&self) -> &Player {
         &self.player
+    }
+
+    //プレイヤー情報の可変ゲッター
+    pub fn player_mut(&mut self) -> &mut Player {
+        &mut self.player
     }
 
     //プレイヤー側のインベントリのゲッター
@@ -63,6 +85,11 @@ impl GameData {
     pub fn dev_inventory_mut(&mut self) -> &mut DevInventory {
         &mut self.dev_inventory
     }
+
+    // 経験値を獲得する
+    pub fn award_exp(&mut self, exp: u32) {
+        self.player.get_exp(exp);
+    }
 }
 
 #[cfg(test)]
@@ -78,13 +105,11 @@ mod tests {
         assert_eq!(game_data.player().now_hp(), 500);
         assert_eq!(game_data.player().now_mp(), 150);
 
-        assert_eq!(game_data.player_inventory().weapon_count(), 1);
+        assert_eq!(game_data.player_inventory().weapon_count(), 2);
         assert!(game_data.player_inventory().find_id(1));
-        assert!(!game_data.player_inventory().find_id(2));
+        assert!(!game_data.player_inventory().find_id(4));
 
-        assert_eq!(game_data.dev_inventory().weapon_count(), 1);
+        assert_eq!(game_data.dev_inventory().weapon_count(), 2);
         assert!(game_data.dev_inventory().find_id(1));
-
-        assert_eq!(game_data.player_inventory().weapon_count(), 1);
     }
 }

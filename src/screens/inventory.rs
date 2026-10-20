@@ -68,7 +68,7 @@ impl InventoryScreen {
             let slot_color = if is_owned {
                 rgb(95, 229, 61)
             } else {
-                rgb(21, 70, 41)
+                rgb(59, 59, 59)
             };
 
             let original_x = GRID_X + column as f32 * (SLOT_SIZE + SLOT_GAP);
@@ -82,22 +82,22 @@ impl InventoryScreen {
 
             // スロットを先に描画する
             draw_rectangle(x, y, size, size, slot_color);
-            draw_rectangle_lines(x, y, size, size, line_width, rgb(95, 229, 61));
+            draw_rectangle_lines(x, y, size, size, line_width, rgb(0, 0, 0));
 
             //所持しているウェポンは中身にしろ背景を追加する
             if is_owned {
                 draw_rectangle(
-                    x + 5.0,
-                    y + 30.0,
-                    size - 20.0,
-                    size - 200.0,
+                    screen.transform_x(original_x + 15.0),
+                    screen.transform_y(original_y + 45.0),
+                    screen.transform_size(SLOT_SIZE - 37.0),
+                    screen.transform_size(SLOT_SIZE - 250.0),
                     rgb(255, 255, 255),
                 );
                 draw_rectangle(
-                    x + 5.0,
-                    y + 100.0,
-                    size - 20.0,
-                    size - 110.0,
+                    screen.transform_x(original_x + 15.0),
+                    screen.transform_y(original_y + 120.0),
+                    screen.transform_size(SLOT_SIZE - 37.0),
+                    screen.transform_size(SLOT_SIZE - 142.0),
                     rgb(255, 255, 255),
                 );
             }
@@ -105,8 +105,8 @@ impl InventoryScreen {
             draw_text(
                 &format!("{id:02}"),
                 screen.transform_x(original_x + 8.0),
-                screen.transform_y(original_y + 22.0),
-                font_size,
+                screen.transform_y(original_y + 37.0),
+                font_size + 20.0,
                 rgb(0, 0, 0),
             );
 
@@ -114,8 +114,8 @@ impl InventoryScreen {
             if let Some(player_weapon) = player_weapon {
                 draw_text(
                     player_weapon.name(),
-                    screen.transform_x(original_x + 8.0),
-                    screen.transform_y(original_y + 55.0),
+                    screen.transform_x(original_x + 15.0),
+                    screen.transform_y(original_y + 70.0),
                     screen.transform_size(16.0),
                     rgb(0, 0, 0),
                 );
@@ -133,7 +133,7 @@ impl InventoryScreen {
 
                     draw_text(
                         line,
-                        screen.transform_x(original_x + 8.0),
+                        screen.transform_x(original_x + 15.0),
                         screen.transform_y(original_y + line_y),
                         screen.transform_size(DESCRIPTION_FONT_SIZE),
                         rgb(0, 0, 0),

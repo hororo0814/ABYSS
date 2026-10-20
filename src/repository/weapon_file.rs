@@ -42,7 +42,7 @@ mod tests {
     fn load_weapons_from_json() {
         let weapons = load_weapons("data/player_weapons.json").unwrap();
 
-        assert_eq!(weapons.len(), 1);
+        assert_eq!(weapons.len(), 2);
         assert_eq!(weapons[0].id(), 1);
         assert_eq!(weapons[0].name(), "playerの入力する名前");
     }

@@ -3,5 +3,10 @@
         "id": 1,
         "name": "playerの入力する名前",
         "description": "playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明"
+    },
+    {
+        "id": 2,
+        "name": "playerの入力する名前2",
+        "description": "playerの入力する説明2playerの入力する説明2playerの入力する説明playerの入力する説明2playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明playerの入力する説明"
     }
 ]

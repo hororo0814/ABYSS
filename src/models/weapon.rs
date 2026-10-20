@@ -5,16 +5,16 @@ use serde::{Deserialize, Serialize};
 pub struct DevWeapon {
     id: u32,
     name: String,
-    player_sign: Sign,
+    player_sign: PlayerSign,
     player_power: u32,
-    enemy_sign: Sign,
+    enemy_sign: PlayerSign,
     enemy_power: u32,
-    mp_sign: Sign,
+    mp_sign: PlayerSign,
     mp_value: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Hash, Eq, Serialize, Deserialize)]
-pub enum Sign {
+pub enum PlayerSign {
     Positive,
     Negative,
     None,
@@ -38,11 +38,11 @@ impl DevWeapon {
     fn new(
         id: u32,
         name: String,
-        player_sign: Sign,
+        player_sign: PlayerSign,
         player_power: u32,
-        enemy_sign: Sign,
+        enemy_sign: PlayerSign,
         enemy_power: u32,
-        mp_sign: Sign,
+        mp_sign: PlayerSign,
         mp_value: u32,
     ) -> Self {
         Self {
@@ -55,6 +55,31 @@ impl DevWeapon {
             mp_sign,
             mp_value,
         }
+    }
+
+    //ゲッター
+    pub fn player_sign(&self) -> PlayerSign {
+        self.player_sign
+    }
+
+    pub fn player_power(&self) -> u32 {
+        self.player_power
+    }
+
+    pub fn enemy_sign(&self) -> PlayerSign {
+        self.enemy_sign
+    }
+
+    pub fn enemy_power(&self) -> u32 {
+        self.enemy_power
+    }
+
+    pub fn mp_sign(&self) -> PlayerSign {
+        self.mp_sign
+    }
+
+    pub fn mp_value(&self) -> u32 {
+        self.mp_value
     }
 }
 
@@ -83,11 +108,11 @@ impl DevInventory {
         &mut self,
         id: u32,
         name: String,
-        player_sign: Sign,
+        player_sign: PlayerSign,
         player_power: u32,
-        enemy_sign: Sign,
+        enemy_sign: PlayerSign,
         enemy_power: u32,
-        mp_sign: Sign,
+        mp_sign: PlayerSign,
         mp_value: u32,
     ) -> bool {
         if self.find_id(id) {
