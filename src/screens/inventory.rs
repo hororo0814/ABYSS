@@ -1,4 +1,5 @@
 use crate::models::inventory::{Inventory, WeaponNote};
+use crate::models::weapon::DevInventory;
 use crate::ui::inventory_grid::{MAX_WEAPON_ID, grid_position};
 use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
@@ -15,6 +16,7 @@ const DESCRIPTION_MAX_WIDTH: f32 = SLOT_SIZE - 16.0 * 2.0;
 
 pub struct InventoryScreen {
     player_weapons: Vec<WeaponNote>,
+    dev_inventory: DevInventory,
 }
 
 fn rgb(r: u8, g: u8, b: u8) -> Color {
@@ -48,18 +50,21 @@ fn wrap_text(text: &str, max_width: f32, font_size: f32) -> Vec<String> {
 }
 
 impl InventoryScreen {
-    pub fn new(player_weapons: Vec<WeaponNote>) -> Self {
-        Self { player_weapons }
+    pub fn new(player_weapons: Vec<WeaponNote>, dev_inventory: DevInventory) -> Self {
+        Self {
+            player_weapons,
+            dev_inventory,
+        }
     }
 
-    pub fn draw(&self, inventory: &Inventory, screen: &ScreenScale) {
+    pub fn draw(&self, dev_inventory: &DevInventory, inventory: &Inventory, screen: &ScreenScale) {
         for id in 1..=MAX_WEAPON_ID {
             let Some((column, row)) = grid_position(id) else {
                 continue;
             };
 
             //所持しているかどうかを判定する
-            let is_owned = inventory.find_id(id);
+            let is_owned = dev_inventory.find_id(id);
 
             //プレイヤー側のウェポンをidから探す
             let player_weapon = self.player_weapons.iter().find(|weapon| weapon.id() == id);
@@ -84,7 +89,7 @@ impl InventoryScreen {
             draw_rectangle(x, y, size, size, slot_color);
             draw_rectangle_lines(x, y, size, size, line_width, rgb(0, 0, 0));
 
-            //所持しているウェポンは中身にしろ背景を追加する
+            //所持しているウェポンは中身に白背景を追加する
             if is_owned {
                 draw_rectangle(
                     screen.transform_x(original_x + 15.0),

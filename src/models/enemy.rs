@@ -3,6 +3,7 @@ use rand::Rng;
 pub struct Enemy {
     id: EnemyId,
     name: String,
+    level: u32,
     exp: u32,
     first_abi_rate: f32,
     max_hp: u32,
@@ -33,10 +34,15 @@ pub enum AbilityNumber {
     Two,
 }
 
+pub struct DevEnemyInventory {
+    dev_enemies: Vec<Enemy>,
+}
+
 impl Enemy {
     pub fn new(
         id: EnemyId,
         name: String,
+        level: u32,
         exp: u32,
         first_abi_rate: f32,
         max_hp: u32,
@@ -44,11 +50,11 @@ impl Enemy {
         have_ability_num: AbilityNumber,
         first_ability: Ability,
         second_ability: Ability,
-        reward_claimed: bool,
     ) -> Self {
         Self {
             id,
             name,
+            level,
             exp,
             first_abi_rate,
             max_hp,
@@ -95,6 +101,11 @@ impl Enemy {
         self.now_hp
     }
 
+    //最大HPのゲッター
+    pub fn max_hp(&self) -> u32 {
+        self.max_hp
+    }
+
     //エネミーのHPが0になったかを判定
     pub fn is_defeated(&self) -> bool {
         self.now_hp == 0
@@ -113,6 +124,70 @@ impl Enemy {
     //報酬を受け取ったことにする関数
     pub fn mark_reward_claimed(&mut self) {
         self.reward_claimed = true;
+    }
+}
+
+impl DevEnemyInventory {
+    pub fn new() -> Self {
+        Self {
+            dev_enemies: Vec::new(),
+        }
+    }
+
+    //idからそのウェポンの中身を取り出せるようにする
+    pub fn get_enemy(&self, id: u32) -> Option<&Enemy> {
+        self.dev_enemies
+            .iter()
+            .find(|enemy| enemy.id == EnemyId(id))
+    }
+
+    //可変参照でidから取り出せるゲッター
+    pub fn get_enemy_mut(&mut self, id: u32) -> Option<&mut Enemy> {
+        self.dev_enemies
+            .iter_mut()
+            .find(|enemy| enemy.id == EnemyId(id))
+    }
+
+    pub fn find_id(&self, id: u32) -> bool {
+        self.dev_enemies
+            .iter()
+            .any(|target| target.id == EnemyId(id))
+    }
+
+    pub fn add_enemy(
+        &mut self,
+        id: EnemyId,
+        name: String,
+        level: u32,
+        exp: u32,
+        first_abi_rate: f32,
+        max_hp: u32,
+        now_hp: u32,
+        have_ability_num: AbilityNumber,
+        first_ability: Ability,
+        second_ability: Ability,
+    ) -> bool {
+        if self.find_id(id.0) {
+            return false;
+        }
+        let new_enemy = Enemy::new(
+            id,
+            name,
+            level,
+            exp,
+            first_abi_rate,
+            max_hp,
+            now_hp,
+            have_ability_num,
+            first_ability,
+            second_ability,
+        );
+        self.dev_enemies.push(new_enemy);
+        true
+    }
+
+    pub fn enemy_count(&self) -> usize {
+        self.dev_enemies.len()
     }
 }
 
@@ -151,7 +226,11 @@ impl Ability {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::enemy::{Ability, AbilityNumber, Enemy, EnemyId, EnemySign};
+    use crate::models::enemy::{
+        Ability,
+        AbilityNumber::{self, Two},
+        Enemy, EnemyId, EnemySign,
+    };
 
     fn create_test_enemy(number: AbilityNumber) -> Enemy {
         let first = Ability::new(EnemySign::Positive, 10, EnemySign::Negative, 20);
@@ -161,6 +240,7 @@ mod tests {
         Enemy::new(
             EnemyId(1),
             "Test Enemy".to_string(),
+            1,
             100,
             0.68,
             500,
@@ -168,7 +248,6 @@ mod tests {
             number,
             first,
             second,
-            false,
         )
     }
 
@@ -176,38 +255,16 @@ mod tests {
     fn take_damage_test() {
         let ability1 = Ability::new(EnemySign::Negative, 100, EnemySign::None, 0);
         let ability2 = Ability::new(EnemySign::None, 0, EnemySign::Positive, 20);
-        let mut enemy = Enemy::new(
-            EnemyId(1),
-            "deamon".to_string(),
-            300,
-            0.68,
-            300,
-            300,
-            AbilityNumber::Two,
-            ability1,
-            ability2,
-            false,
-        );
+        let mut enemy = create_test_enemy(AbilityNumber::Two);
         enemy.take_damage(200);
-        assert_eq!(enemy.now_hp, 100);
+        assert_eq!(enemy.now_hp, 300);
     }
 
     #[test]
     fn take_dead_damage_test() {
         let ability1 = Ability::new(EnemySign::Negative, 100, EnemySign::None, 0);
         let ability2 = Ability::new(EnemySign::None, 0, EnemySign::Positive, 20);
-        let mut enemy = Enemy::new(
-            EnemyId(1),
-            "deamon".to_string(),
-            300,
-            0.68,
-            300,
-            300,
-            AbilityNumber::Two,
-            ability1,
-            ability2,
-            false,
-        );
+        let mut enemy = create_test_enemy(AbilityNumber::Two);
         enemy.take_damage(600);
         assert_eq!(enemy.now_hp, 0);
     }
@@ -216,42 +273,20 @@ mod tests {
     fn heal_hp_test() {
         let ability1 = Ability::new(EnemySign::Negative, 100, EnemySign::None, 0);
         let ability2 = Ability::new(EnemySign::None, 0, EnemySign::Positive, 20);
-        let mut enemy = Enemy::new(
-            EnemyId(1),
-            "deamon".to_string(),
-            300,
-            0.68,
-            300,
-            300,
-            AbilityNumber::Two,
-            ability1,
-            ability2,
-            false,
-        );
+        let mut enemy = create_test_enemy(AbilityNumber::Two);
         enemy.take_damage(100);
         enemy.heal_hp(50);
-        assert_eq!(enemy.now_hp, 250);
+        assert_eq!(enemy.now_hp, 450);
     }
 
     #[test]
     fn heal_maxhp_test() {
         let ability1 = Ability::new(EnemySign::Negative, 100, EnemySign::None, 0);
         let ability2 = Ability::new(EnemySign::None, 0, EnemySign::Positive, 20);
-        let mut enemy = Enemy::new(
-            EnemyId(1),
-            "deamon".to_string(),
-            300,
-            0.68,
-            300,
-            300,
-            AbilityNumber::Two,
-            ability1,
-            ability2,
-            false,
-        );
+        let mut enemy = create_test_enemy(AbilityNumber::Two);
         enemy.take_damage(200);
         enemy.heal_hp(700);
-        assert_eq!(enemy.now_hp, 300);
+        assert_eq!(enemy.now_hp, 500);
     }
 
     #[test]
@@ -277,5 +312,19 @@ mod tests {
 
             assert!(is_first || is_second);
         }
+    }
+
+    #[test]
+    fn reward_claimed_test() {
+        let mut enemy = create_test_enemy(AbilityNumber::One);
+
+        // 初期状態では報酬未受け取り
+        assert!(!enemy.reward_claimed());
+
+        // 報酬受け取り済みにする
+        enemy.mark_reward_claimed();
+
+        // 状態が更新されたことを確認
+        assert!(enemy.reward_claimed());
     }
 }

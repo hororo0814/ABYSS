@@ -14,6 +14,12 @@ pub struct Inventory {
     player_weapons: Vec<WeaponNote>,
 }
 
+impl Default for Inventory {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl WeaponNote {
     pub fn new(id: u32, name: String, description: String) -> Self {
         Self {
@@ -75,7 +81,7 @@ impl Inventory {
 
 #[cfg(test)]
 mod tests {
-    use crate::models::inventory::{Inventory, WeaponNote};
+    use crate::models::inventory::Inventory;
 
     #[test]
     fn empty_weapons_test() {

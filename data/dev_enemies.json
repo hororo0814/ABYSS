@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "name": "ザコ1",
+        "player_sign": "Positive",
+        "player_power": 10,
+        "enemy_sign": "Negative",
+        "enemy_power": 5,
+        "mp_sign": "None",
+        "mp_value": 0
+    },
+    {
+        "id": 2,
+        "name": "試作武器",
+        "player_sign": "Positive",
+        "player_power": 10,
+        "enemy_sign": "Negative",
+        "enemy_power": 5,
+        "mp_sign": "None",
+        "mp_value": 0
+    }
+]

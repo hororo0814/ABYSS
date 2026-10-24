@@ -1,5 +1,10 @@
+use std::ops::ControlFlow::Continue;
+
 use crate::game_data::GameData;
+use crate::models::battle_result::BattleResult;
 use crate::models::enemy::Enemy;
+use crate::models::player::ExpError;
+use crate::models::player::Player;
 use crate::models::weapon::PlayerSign;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -11,6 +16,9 @@ pub enum BattleError {
     //プレイヤーが対象の武器を所持していない場合
     WeaponNotOwned,
     BattleAlreadyFinished,
+    EnemyNotDefeated,
+    RewardAlreadyClaimed,
+    ExpError(ExpError),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,6 +28,7 @@ pub enum BattleOutcome {
     Defeat,
 }
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct BattleSystem;
 
 impl BattleSystem {
@@ -143,20 +152,98 @@ impl BattleSystem {
         game_data: &mut GameData,
         enemy: &mut Enemy,
         weapon_id: u32,
-    ) -> Result<BattleOutcome, BattleError> {
-        // 1. プレイヤーが武器を使用する
-        let player_outcome = Self::use_weapon(game_data, enemy, weapon_id)?;
+    ) -> Option<Result<BattleResult, BattleError>> {
+        //プレイヤーの戦闘前のレベルを保存する
+        let previous_level = game_data.player().level();
 
-        // 2. プレイヤーの攻撃で勝敗が決まったら終了
-        if player_outcome != BattleOutcome::Ongoing {
-            return Ok(player_outcome);
+        // 1. プレイヤーが武器を使用する
+        let player_outcome = Self::use_weapon(game_data, enemy, weapon_id);
+
+        match player_outcome {
+            // 2. プレイヤーの攻撃で勝利した場合
+            Ok(BattleOutcome::Victory) => {
+                if let Err(error) = Self::claim_victory_reward(game_data, enemy) {
+                    return Some(Err(error));
+                }
+                let current_level = game_data.player().level();
+                let battle_result = BattleResult::new(
+                    BattleOutcome::Victory,
+                    enemy.exp(),
+                    previous_level,
+                    current_level,
+                );
+                return Some(Ok(battle_result));
+            }
+
+            // 3. プレイヤーの攻撃で敗北した場合
+            Ok(BattleOutcome::Defeat) => {
+                let current_level = game_data.player().level();
+                let battle_result =
+                    BattleResult::new(BattleOutcome::Defeat, 0, previous_level, current_level);
+                return Some(Ok(battle_result));
+            }
+
+            Ok(BattleOutcome::Ongoing) => {}
+
+            Err(error) => return Some(Err(error)),
         }
 
-        // 3. 攻撃が成功して戦闘継続なら，敵が1回行動する
-        let enemy_outcome = Self::enemy_turn(game_data, enemy)?;
+        // 4. 戦闘継続なら敵が行動する
+        let enemy_outcome = Self::enemy_turn(game_data, enemy);
 
-        // 4. 敵の行動後の結果を返す
-        Ok(enemy_outcome)
+        match enemy_outcome {
+            // 5. 敵の行動後に勝利した場合も報酬を付与する
+            Ok(BattleOutcome::Victory) => {
+                Self::claim_victory_reward(game_data, enemy);
+                let current_level = game_data.player().level();
+
+                let battle_result = BattleResult::new(
+                    BattleOutcome::Victory,
+                    enemy.exp(),
+                    previous_level,
+                    current_level,
+                );
+                return Some(Ok(battle_result));
+            }
+
+            // 5. 敵の行動後に敗北した場合
+            Ok(BattleOutcome::Defeat) => {
+                let current_level = game_data.player().level();
+                let battle_result =
+                    BattleResult::new(BattleOutcome::Defeat, 0, previous_level, current_level);
+                return Some(Ok(battle_result));
+            }
+
+            Ok(BattleOutcome::Ongoing) => {}
+
+            Err(error) => return Some(Err(error)),
+        }
+
+        // ６. 敵の行動後の結果を返す
+        None
+    }
+
+    pub fn claim_victory_reward(
+        game_data: &mut GameData,
+        enemy: &mut Enemy,
+    ) -> Result<(), BattleError> {
+        //まだ敵を倒していない
+        if !enemy.is_defeated() {
+            return Err(BattleError::EnemyNotDefeated);
+        }
+
+        //すでに報酬を受け取っている
+        if enemy.reward_claimed() {
+            return Err(BattleError::RewardAlreadyClaimed);
+        }
+
+        //経験値を受け取る処理
+        game_data
+            .award_exp(enemy.exp())
+            .map_err(BattleError::ExpError)?;
+
+        enemy.mark_reward_claimed();
+        Ok(())
     }
 }
 
@@ -166,6 +253,8 @@ mod tests {
     use crate::models::enemy::Ability;
     use crate::models::enemy::AbilityNumber;
     use crate::models::enemy::{Enemy, EnemyId, EnemySign};
+    use crate::systems::combat::BattleError::EnemyNotDefeated;
+    use crate::systems::combat::BattleError::RewardAlreadyClaimed;
     use crate::systems::combat::BattleOutcome::Ongoing;
     use crate::systems::combat::BattleOutcome::Victory;
     use crate::systems::combat::{BattleError, BattleOutcome, BattleSystem};
@@ -176,6 +265,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             500,
@@ -183,7 +273,6 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
         let outcome = BattleSystem::use_weapon(&mut game_data, &mut test_enemy, 1);
         assert_eq!(outcome, Ok(BattleOutcome::Ongoing));
@@ -198,6 +287,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             1500,
@@ -205,7 +295,6 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
         BattleSystem::use_weapon(&mut game_data, &mut test_enemy, 1);
         BattleSystem::use_weapon(&mut game_data, &mut test_enemy, 1);
@@ -226,6 +315,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             500,
@@ -233,7 +323,6 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
         let outcome = BattleSystem::use_weapon(&mut game_data, &mut test_enemy, 5);
         assert_eq!(outcome, Err(BattleError::WeaponNotOwned));
@@ -245,6 +334,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             150,
@@ -252,7 +342,6 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
         let first_outcome = BattleSystem::use_weapon(&mut game_data, &mut test_enemy, 1);
         assert_eq!(first_outcome, Ok(Ongoing));
@@ -270,6 +359,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             500,
@@ -277,7 +367,6 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
         let outcome = BattleSystem::enemy_turn(&mut game_data, &mut test_enemy);
         assert_eq!(outcome, Ok(BattleOutcome::Ongoing));
@@ -290,6 +379,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             500,
@@ -297,12 +387,11 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
 
         let outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
 
-        assert_eq!(outcome, Ok(BattleOutcome::Ongoing));
+        assert_eq!(outcome, None);
         assert_eq!(test_enemy.now_hp(), 420);
         assert_eq!(game_data.player().now_mp(), 125);
         assert_eq!(game_data.player().now_hp(), 400);
@@ -314,6 +403,7 @@ mod tests {
         let mut test_enemy = Enemy::new(
             EnemyId(1),
             "テスト用モンスター".to_string(),
+            1,
             300,
             1.0,
             1500,
@@ -321,7 +411,6 @@ mod tests {
             AbilityNumber::One,
             Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
             Ability::new(EnemySign::None, 0, EnemySign::None, 0),
-            false,
         );
 
         // MPを0にするため，既存の攻撃処理を6回実行する
@@ -337,9 +426,148 @@ mod tests {
         // MP不足のため，敵は行動しない
         let outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
 
-        assert_eq!(outcome, Err(BattleError::NotEnoughMp));
+        assert_eq!(outcome, Some(Err(BattleError::NotEnoughMp)));
         assert_eq!(game_data.player().now_hp(), hp_before);
         assert_eq!(test_enemy.now_hp(), enemy_hp_before);
         assert_eq!(game_data.player().now_mp(), mp_before);
+    }
+
+    #[test]
+    fn take_turn_award_test() {
+        let mut game_data = GameData::new_game();
+        let mut test_enemy = Enemy::new(
+            EnemyId(1),
+            "テスト用モンスター".to_string(),
+            1,
+            1000,
+            1.0,
+            150,
+            150,
+            AbilityNumber::One,
+            Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
+            Ability::new(EnemySign::None, 0, EnemySign::None, 0),
+        );
+
+        let first_outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+        assert_eq!(first_outcome, None);
+
+        let second_outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+
+        assert_eq!(game_data.player().level(), 2);
+        assert_eq!(game_data.player().now_exp(), 0);
+        assert!(test_enemy.reward_claimed());
+    }
+
+    #[test]
+    fn multiple_not_award_test() {
+        let mut game_data = GameData::new_game();
+        let mut test_enemy = Enemy::new(
+            EnemyId(1),
+            "テスト用モンスター".to_string(),
+            1,
+            1000,
+            1.0,
+            70,
+            70,
+            AbilityNumber::One,
+            Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
+            Ability::new(EnemySign::None, 0, EnemySign::None, 0),
+        );
+
+        let first_outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+
+        let result = first_outcome
+            .expect("勝利時には結果が返るはず")
+            .expect("勝利処理は成功するはず");
+
+        assert_eq!(result.outcome, BattleOutcome::Victory);
+        assert_eq!(result.gained_exp, 1000);
+        assert_eq!(game_data.player().level(), 2);
+        assert_eq!(game_data.player().now_exp(), 0);
+        assert!(test_enemy.reward_claimed());
+
+        let second_outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+
+        assert_eq!(
+            second_outcome,
+            Some(Err(BattleError::BattleAlreadyFinished))
+        );
+
+        // 2回目の呼び出しで経験値やレベルが変化していないことを確認
+        assert_eq!(game_data.player().level(), 2);
+        assert_eq!(game_data.player().now_exp(), 0);
+    }
+
+    #[test]
+    fn defeat_not_award_test() {
+        let mut game_data = GameData::new_game();
+        let mut test_enemy = Enemy::new(
+            EnemyId(1),
+            "テスト用モンスター".to_string(),
+            1,
+            1000,
+            1.0,
+            150,
+            150,
+            AbilityNumber::One,
+            Ability::new(EnemySign::Negative, 800, EnemySign::None, 0),
+            Ability::new(EnemySign::None, 0, EnemySign::None, 0),
+        );
+
+        let outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+
+        let result = outcome
+            .expect("敗北時には結果が返るはず")
+            .expect("敗北はエラーではないはず");
+
+        assert_eq!(result.outcome, BattleOutcome::Defeat);
+        assert_eq!(result.gained_exp, 0);
+        assert_eq!(result.previous_level, 1);
+        assert_eq!(result.current_level, 1);
+    }
+
+    #[test]
+    fn not_defeat_test() {
+        let mut game_data = GameData::new_game();
+        let mut test_enemy = Enemy::new(
+            EnemyId(1),
+            "テスト用モンスター".to_string(),
+            1,
+            1000,
+            1.0,
+            150,
+            150,
+            AbilityNumber::One,
+            Ability::new(EnemySign::Negative, 800, EnemySign::None, 0),
+            Ability::new(EnemySign::None, 0, EnemySign::None, 0),
+        );
+
+        let outcome = BattleSystem::claim_victory_reward(&mut game_data, &mut test_enemy);
+        assert_eq!(outcome, Err(EnemyNotDefeated));
+    }
+
+    #[test]
+    fn already_get_award_test() {
+        let mut game_data = GameData::new_game();
+        let mut test_enemy = Enemy::new(
+            EnemyId(1),
+            "テスト用モンスター".to_string(),
+            1,
+            1000,
+            1.0,
+            60,
+            60,
+            AbilityNumber::One,
+            Ability::new(EnemySign::Negative, 100, EnemySign::None, 0),
+            Ability::new(EnemySign::None, 0, EnemySign::None, 0),
+        );
+
+        let first_outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+        let second_outcome = BattleSystem::take_turn(&mut game_data, &mut test_enemy, 1);
+
+        assert_eq!(
+            BattleSystem::claim_victory_reward(&mut game_data, &mut test_enemy),
+            Err(RewardAlreadyClaimed)
+        );
     }
 }

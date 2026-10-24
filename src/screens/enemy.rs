@@ -1,4 +1,7 @@
 use crate::game_state::GameState;
+use crate::models::enemy::DevEnemyInventory;
+use crate::models::enemy_inventory::{EnemyInventory, EnemyNote};
+use crate::screens::enemy_inventory::EnemyInventoryScreen;
 use crate::ui::button::Button;
 use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
@@ -9,6 +12,7 @@ pub struct EnemyScreen {
     abyss_button: Button,
     review_button: Button,
     back_home_button: Button,
+    inventory_screen: EnemyInventoryScreen,
 }
 
 fn rgb(r: u8, g: u8, b: u8) -> Color {
@@ -16,7 +20,7 @@ fn rgb(r: u8, g: u8, b: u8) -> Color {
 }
 
 impl EnemyScreen {
-    pub fn new() -> Self {
+    pub fn new(memo_enemies: Vec<EnemyNote>, dev_enemy_inventory: DevEnemyInventory) -> Self {
         Self {
             weapon_button: Button::new(
                 1100.0,
@@ -88,10 +92,16 @@ impl EnemyScreen {
                 29,
                 39,
             ),
+            inventory_screen: EnemyInventoryScreen::new(memo_enemies, dev_enemy_inventory),
         }
     }
 
-    pub fn draw(&self, screen: &ScreenScale) {
+    pub fn draw(
+        &self,
+        dev_enemy_inventory: &DevEnemyInventory,
+        screen: &ScreenScale,
+        enemy_inventory: &EnemyInventory,
+    ) {
         self.weapon_button.draw(screen);
         self.enemy_button.draw(screen);
         self.abyss_button.draw(screen);
@@ -105,10 +115,12 @@ impl EnemyScreen {
             2.0,
             rgb(88, 231, 32),
         );
+        self.inventory_screen
+            .draw(dev_enemy_inventory, enemy_inventory, screen);
     }
 
     pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {
-        if self.abyss_button.is_clicked(screen) || self.abyss_button.is_clicked(screen) {
+        if self.abyss_button.is_clicked(screen) || self.enemy_button.is_clicked(screen) {
             return Some(GameState::Combat);
         }
         if self.back_home_button.is_clicked(screen) {

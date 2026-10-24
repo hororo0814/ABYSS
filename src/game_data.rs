@@ -1,22 +1,27 @@
+use crate::models::enemy::{Ability, AbilityNumber, DevEnemyInventory, Enemy, EnemyId, EnemySign};
+use crate::models::enemy_inventory::EnemyInventory;
 use crate::models::inventory::Inventory;
-use crate::models::player::Player;
+use crate::models::player::{ExpError, Player};
+use crate::models::weapon::DevInventory;
 use crate::models::weapon::PlayerSign;
-use crate::models::weapon::{DevInventory, DevWeapon};
 
 pub struct GameData {
     player: Player,
     player_inventory: Inventory,
     dev_inventory: DevInventory,
+    player_enemy_inventory: EnemyInventory,
+    dev_enemy_inventory: DevEnemyInventory,
 }
 
 impl GameData {
     pub fn new_game() -> Self {
         let mut player_inventory = Inventory::new();
         let mut dev_inventory = DevInventory::new();
+        let mut player_enemy_inventory = EnemyInventory::new();
+        let mut dev_enemy_inventory = DevEnemyInventory::new();
 
         //プレイヤー側のインベントリ
         // ゲーム開始時はID 1の武器だけを所持する
-        //ここにあれば所持している判定になってカード背景に色がつく
         player_inventory.add_weapon(
             1,
             "初期武器".to_string(),
@@ -29,6 +34,7 @@ impl GameData {
         );
 
         // 開発者側のインベントリ
+        //ここにあれば所持している判定になってカード背景に色がつく
         // ゲーム開始時はID 1の武器だけを所持する
         dev_inventory.add_weapon(
             1,
@@ -51,10 +57,26 @@ impl GameData {
             25,
         );
 
+        //ここにあればであったことのある判定になってカード背景に色がつく
+        dev_enemy_inventory.add_enemy(
+            EnemyId(1),
+            "test_enemy".to_string(),
+            1,
+            1200,
+            1.0,
+            300,
+            300,
+            AbilityNumber::One,
+            Ability::new(EnemySign::Negative, 700, EnemySign::None, 0),
+            Ability::new(EnemySign::None, 0, EnemySign::None, 0),
+        );
+
         Self {
             player: Player::new(),
             player_inventory,
             dev_inventory,
+            player_enemy_inventory,
+            dev_enemy_inventory,
         }
     }
 
@@ -68,11 +90,13 @@ impl GameData {
         &mut self.player
     }
 
+    //ウェポン
     //プレイヤー側のインベントリのゲッター
     pub fn player_inventory(&self) -> &Inventory {
         &self.player_inventory
     }
 
+    //プレイヤー側のインベントリの可変ゲッター
     pub fn player_inventory_mut(&mut self) -> &mut Inventory {
         &mut self.player_inventory
     }
@@ -82,13 +106,35 @@ impl GameData {
         &self.dev_inventory
     }
 
+    //開発者側のインベントリの可変ゲッター
     pub fn dev_inventory_mut(&mut self) -> &mut DevInventory {
         &mut self.dev_inventory
     }
 
+    //エネミー
+    //プレイヤー側のエネミーのゲッター
+    pub fn player_enemy_inventory(&self) -> &EnemyInventory {
+        &self.player_enemy_inventory
+    }
+
+    //プレイヤー側のエネミーの可変ゲッター
+    pub fn player_enemy_inventory_mut(&mut self) -> &mut EnemyInventory {
+        &mut self.player_enemy_inventory
+    }
+
+    //開発者側のエネミーのゲッター
+    pub fn dev_enemy_inventory(&self) -> &DevEnemyInventory {
+        &self.dev_enemy_inventory
+    }
+
+    //開発者側のエネミーの可変ゲッター
+    pub fn dev_enemy_inventory_mut(&mut self) -> &mut DevEnemyInventory {
+        &mut self.dev_enemy_inventory
+    }
+
     // 経験値を獲得する
-    pub fn award_exp(&mut self, exp: u32) {
-        self.player.get_exp(exp);
+    pub fn award_exp(&mut self, exp: u32) -> Result<(), ExpError> {
+        self.player_mut().get_exp(exp)
     }
 }
 

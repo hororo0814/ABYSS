@@ -1,4 +1,6 @@
 use crate::game_state::GameState;
+use crate::models::battle_result::BattleResult;
+use crate::systems::combat::BattleOutcome;
 use crate::ui::button::Button;
 use crate::ui::screen_scale::ScreenScale;
 use macroquad::prelude::*;
@@ -46,8 +48,44 @@ impl ResultScreen {
         }
     }
 
-    pub fn draw(&self, screen: &ScreenScale) {
+    pub fn draw(&self, screen: &ScreenScale, battle_result: &BattleResult) {
         self.back_weapon_button.draw(screen);
+
+        //戦闘結果を表示する
+        let outcome_text = match battle_result.outcome {
+            BattleOutcome::Victory => "Victory",
+            BattleOutcome::Defeat => "Defeat",
+            BattleOutcome::Ongoing => "Ongoing",
+        };
+        let outcome_text_color = match battle_result.outcome {
+            BattleOutcome::Victory => rgb(69, 52, 196),
+            BattleOutcome::Defeat => rgb(183, 13, 13),
+            BattleOutcome::Ongoing => rgb(0, 0, 0),
+        };
+        draw_text(
+            outcome_text,
+            screen.transform_x(400.0),
+            screen.transform_y(150.0),
+            screen.transform_size(80.0),
+            outcome_text_color,
+        );
+        draw_text(
+            format!("gained exp:{}", battle_result.gained_exp),
+            screen.transform_x(400.0),
+            screen.transform_y(300.0),
+            screen.transform_size(40.0),
+            outcome_text_color,
+        );
+        draw_text(
+            format!(
+                "level : {} ----------> {}",
+                battle_result.previous_level, battle_result.current_level
+            ),
+            screen.transform_x(400.0),
+            screen.transform_y(450.0),
+            screen.transform_size(40.0),
+            outcome_text_color,
+        );
     }
 
     pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {

@@ -1,5 +1,6 @@
 use crate::game_state::GameState;
 use crate::models::inventory::{Inventory, WeaponNote};
+use crate::models::weapon::DevInventory;
 use crate::screens::inventory::InventoryScreen;
 use crate::ui::button::Button;
 use crate::ui::screen_scale::ScreenScale;
@@ -19,7 +20,7 @@ fn rgb(r: u8, g: u8, b: u8) -> Color {
 }
 
 impl WeaponScreen {
-    pub fn new(weapons: Vec<WeaponNote>) -> Self {
+    pub fn new(dev_inventory: DevInventory, weapons: Vec<WeaponNote>) -> Self {
         Self {
             weapon_button: Button::new(
                 1100.0,
@@ -91,11 +92,11 @@ impl WeaponScreen {
                 29,
                 39,
             ),
-            inventory_screen: InventoryScreen::new(weapons),
+            inventory_screen: InventoryScreen::new(weapons, dev_inventory),
         }
     }
 
-    pub fn draw(&self, screen: &ScreenScale, inventory: &Inventory) {
+    pub fn draw(&self, dev_inventory: &DevInventory, screen: &ScreenScale, inventory: &Inventory) {
         self.weapon_button.draw(screen);
         self.enemy_button.draw(screen);
         self.abyss_button.draw(screen);
@@ -109,7 +110,8 @@ impl WeaponScreen {
             2.0,
             rgb(88, 231, 32),
         );
-        self.inventory_screen.draw(inventory, screen);
+        self.inventory_screen
+            .draw(&dev_inventory, inventory, screen);
     }
 
     pub fn input(&self, screen: &ScreenScale) -> Option<GameState> {

@@ -9,6 +9,13 @@ pub struct Player {
     weapon_ids: Vec<u32>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum ExpError {
+    ExperienceOverflow,
+    RequiredExpOverflow,
+    LevelOverflow,
+}
+
 impl Player {
     pub fn new() -> Self {
         Self {
@@ -51,16 +58,31 @@ impl Player {
     }
 
     //経験値を獲得したときの処理
-    pub fn get_exp(&mut self, get_exp: u32) {
-        let max_exp = self.level * 1000;
+    pub fn get_exp(&mut self, get_exp: u32) -> Result<(), ExpError> {
+        let mut now_exp = self
+            .now_exp
+            .checked_add(get_exp)
+            .ok_or(ExpError::ExperienceOverflow)?;
 
-        if get_exp + self.now_exp <= max_exp {
-            self.now_exp += get_exp;
-        } else {
-            self.now_exp += get_exp;
-            self.now_exp = self.now_exp - max_exp;
-            self.level += 1;
+        let mut level = self.level;
+
+        loop {
+            let required_exp = level
+                .checked_mul(1000)
+                .ok_or(ExpError::RequiredExpOverflow)?;
+
+            if now_exp < required_exp {
+                break;
+            }
+
+            now_exp -= required_exp;
+
+            level = level.checked_add(1).ok_or(ExpError::LevelOverflow)?;
         }
+        self.now_exp = now_exp;
+        self.level = level;
+
+        Ok(())
     }
 
     //レベルのゲッター
@@ -73,9 +95,24 @@ impl Player {
         self.now_hp
     }
 
+    //最大のHPのゲッター
+    pub fn max_hp(&self) -> u32 {
+        self.max_hp
+    }
+
+    //現状の経験値のゲッター
+    pub fn now_exp(&self) -> u32 {
+        self.now_exp
+    }
+
     //現状のMPのゲッター
     pub fn now_mp(&self) -> u32 {
         self.now_mp
+    }
+
+    //最大のMPのゲッター
+    pub fn max_mp(&self) -> u32 {
+        self.max_mp
     }
 
     //ウェポンを使うときにMPが足りるかどうかの判定
@@ -158,7 +195,7 @@ mod tests {
     #[test]
     fn get_exp_test() {
         let mut player = Player::new();
-        player.get_exp(500);
+        player.get_exp(500).unwrap();
         assert_eq!(player.now_exp, 500);
     }
 
@@ -169,5 +206,13 @@ mod tests {
         player.get_exp(800);
         assert_eq!(player.now_exp, 300);
         assert_eq!(player.level, 2);
+    }
+
+    #[test]
+    fn get_multiple_level_test() {
+        let mut player = Player::new();
+        player.get_exp(3500);
+        assert_eq!(player.now_exp, 500);
+        assert_eq!(player.level, 3);
     }
 }
